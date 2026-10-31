@@ -1,91 +1,57 @@
 #include "tasks.h"
-
-#include <cerrno>
-#include <cmath>
-#include <cstdlib>
-#include <iomanip>
 #include <iostream>
-#include <stdexcept>
+#include <sstream>
 #include <string>
-#include <vector>
-
+#include <cmath>
+#include <stdexcept>
 namespace {
-
-std::string readLine(const char* prompt) {
-    std::cout << prompt << std::flush;
+double readNumber(const std::string& prompt) {
+    std::cout << prompt;
     std::string line;
-    if (!std::getline(std::cin, line)) {
-        throw std::runtime_error("end of input");
-    }
-    return line;
-}
-
-double parseNumber(const std::string& text) {
-    const char* start = text.c_str();
-    char* end = nullptr;
-    errno = 0;
-    double value = std::strtod(start, &end);
-    if (end == start) throw std::invalid_argument("please enter a number");
-    while (*end == ' ' || *end == '\t' || *end == '\r') ++end;
-    if (*end != '\0') throw std::invalid_argument("please enter only one number");
-    if (!std::isfinite(value)) throw std::invalid_argument("number must be finite");
+    if (!std::getline(std::cin, line)) throw std::runtime_error("Input ended.");
+    std::istringstream input(line);
+    double value;
+    std::string extra;
+    if (!(input >> value) || (input >> extra) || !std::isfinite(value))
+        throw std::invalid_argument("Enter one finite number.");
     return value;
 }
-
-void printResult(const char* label, double value, const char* unit) {
-    std::cout << std::fixed << std::setprecision(4)
-              << label << ": " << value << " " << unit << "\n";
-}
-
 std::vector<double> readResistors() {
-    int n = readCount("How many resistors (1-100)? ");
+    double count = readNumber("Number of resistors (1-100): ");
+    if (count < 1 || count > 100 || std::floor(count) != count)
+        throw std::invalid_argument("Enter a whole count from 1 to 100.");
     std::vector<double> resistors;
-    for (int i = 1; i <= n; ++i) {
-        std::string prompt = "Resistor " + std::to_string(i) + " (ohms): ";
-        resistors.push_back(readNumber(prompt.c_str()));
-    }
+    for (int i = 0; i < static_cast<int>(count); ++i)
+        resistors.push_back(readNumber("Resistor " + std::to_string(i + 1) + " (ohms): "));
     return resistors;
 }
-
-}  
-
-double readNumber(const char* prompt) {
-    return parseNumber(readLine(prompt));
 }
-
-int readCount(const char* prompt) {
-    double value = readNumber(prompt);
-    if (value != std::floor(value)) {
-        throw std::invalid_argument("count must be a whole number");
-    }
-    if (value < 1.0 || value > 100.0) {
-        throw std::invalid_argument("resistor count must be 1 to 100");
-    }
-    return static_cast<int>(value);
+int readMenuChoice() {
+    double choice = readNumber("Choice: ");
+    if (choice < 0 || choice > 5 || std::floor(choice) != choice)
+        throw std::invalid_argument("Choose a whole number from 0 to 5.");
+    return static_cast<int>(choice);
 }
-
-void resistanceTask(CircuitCalculator& calc) {
+void resistanceTask(CircuitCalculator& c) {
     double v = readNumber("Voltage (V): ");
     double i = readNumber("Current (A): ");
-    printResult("Resistance", calc.resistance(v, i), "ohms");
+    std::cout << "Resistance = " << c.resistance(v, i) << " ohms\n";
 }
-
-void currentTask(CircuitCalculator& calc) {
+void currentTask(CircuitCalculator& c) {
     double v = readNumber("Voltage (V): ");
     double r = readNumber("Resistance (ohms): ");
-    printResult("Current", calc.current(v, r), "A");
+    std::cout << "Current = " << c.current(v, r) << " A\n";
 }
-
-void powerTask(CircuitCalculator& calc) {
+void powerTask(CircuitCalculator& c) {
     double v = readNumber("Voltage (V): ");
     double i = readNumber("Current (A): ");
-    printResult("Power", calc.power(v, i), "W");
+    std::cout << "Power = " << c.power(v, i) << " W\n";
 }
-
-void seriesTask(CircuitCalculator& calc) {
-    printResult("Equivalent resistance", calc.series(readResistors()), "ohms");
+void seriesTask(CircuitCalculator& c) {
+    auto resistors = readResistors();
+    std::cout << "Series resistance = " << c.series(resistors) << " ohms\n";
 }
-
-void parallelTask(CircuitCalculator& calc) {
-    printResult("Equivalent resistance", calc.parallel(readResistors()), "ohms");
+void parallelTask(CircuitCalculator& c) {
+    auto resistors = readResistors();
+    std::cout << "Parallel resistance = " << c.parallel(resistors) << " ohms\n";
 }

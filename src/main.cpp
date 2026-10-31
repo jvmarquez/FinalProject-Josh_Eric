@@ -1,72 +1,28 @@
-#include <exception>
-#include <iostream>
-#include <string>
-
-#include "calculator.h"
 #include "tasks.h"
-
-namespace {
-
-const int MENU_EOF = -2;      // input ended
-const int MENU_INVALID = -1;  // not a valid menu entry
-
-void printMenu() {
-    std::cout << "\n=== Classical Circuit Calculator ===\n"
-              << "1. Resistance  (R = V / I)\n"
-              << "2. Current     (I = V / R)\n"
-              << "3. Power       (P = V x I)\n"
-              << "4. Series      (Req = sum of R)\n"
-              << "5. Parallel    (Req = 1 / sum(1/R))\n"
-              << "0. Exit\n"
-              << "Choice: " << std::flush;
-}
-
-int readMenuChoice() {
-    std::string line;
-    if (!std::getline(std::cin, line)) return MENU_EOF;
-
-    // trim whitespace
-    std::size_t first = line.find_first_not_of(" \t\r");
-    std::size_t last = line.find_last_not_of(" \t\r");
-    if (first == std::string::npos) return MENU_INVALID;
-    line = line.substr(first, last - first + 1);
-
-    if (line.size() == 1 && line[0] >= '0' && line[0] <= '5') {
-        return line[0] - '0';
-    }
-    return MENU_INVALID;
-}
-
-}  // namespace
-
+#include <iostream>
+#include <iomanip>
+#include <stdexcept>
 int main() {
-    CircuitCalculator calc;
-    bool running = true;
-
-    while (running) {
-        printMenu();
-        int choice = readMenuChoice();
-
+    CircuitCalculator calculator;
+    std::cout << std::fixed << std::setprecision(4);
+    while (true) {
+        std::cout << "\nClassical Circuit Calculator\n"
+                  << "1. Resistance\n2. Current\n3. Power\n"
+                  << "4. Series resistance\n5. Parallel resistance\n0. Exit\n";
         try {
-            switch (choice) {
-                case 1: resistanceTask(calc); break;
-                case 2: currentTask(calc); break;
-                case 3: powerTask(calc); break;
-                case 4: seriesTask(calc); break;
-                case 5: parallelTask(calc); break;
-                case 0:
-                case MENU_EOF:
-                    running = false;
-                    break;
-                default:
-                    std::cout << "Invalid menu choice. Enter 0-5.\n";
-                    break;
+            switch (readMenuChoice()) {
+                case 1: resistanceTask(calculator); break;
+                case 2: currentTask(calculator); break;
+                case 3: powerTask(calculator); break;
+                case 4: seriesTask(calculator); break;
+                case 5: parallelTask(calculator); break;
+                case 0: std::cout << "Goodbye!\n"; return 0;
             }
-        } catch (const std::exception& e) {
-            std::cout << "Invalid input: " << e.what() << "\n";
+        } catch (const std::invalid_argument& error) {
+            std::cout << "Invalid input: " << error.what() << '\n';
+        } catch (const std::runtime_error& error) {
+            std::cout << error.what() << '\n';
+            return 0;
         }
     }
-
-    std::cout << "\nGoodbye.\n";
-    return 0;
 }
