@@ -12,7 +12,7 @@ for input in tests/*.in; do
     ok=1
     while IFS= read -r line; do
         if ! grep -qF -- "$line" <<< "$output"; then ok=0; echo "  missing: $line"; fi
-    done < "tests/$name.expect"
+    done < "tests/$name.expected"
     if [ $ok -eq 1 ]; then echo "PASS $name"; pass=$((pass+1)); else echo "FAIL $name"; fail=$((fail+1)); fi
 done
 echo "$pass passed, $fail failed"
